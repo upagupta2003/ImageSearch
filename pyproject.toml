@@ -20,6 +20,7 @@ transformers = "^4.46.2"
 torch = "^2.5.1"
 tqdm = "^4.67.0"
 chromadb = "^0.5.18"
+sentence-transformers = "^3.2.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.10.0"
