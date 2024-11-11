@@ -19,6 +19,11 @@ google-auth-httplib2 = "^0.2.0"
 google-auth-oauthlib = "^1.2.1"
 chromadb = "^0.5.18"
 pysqlite3-binary = "^0.5.4"
+datasets = "^3.1.0"
+clickhouse-connect = "^0.8.6"
+transformers = "^4.46.2"
+torch = "^2.5.1"
+tqdm = "^4.67.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.10.0"
