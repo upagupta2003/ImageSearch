@@ -44,7 +44,7 @@ class ImageProcessor:
 
     def _store_image(self, image: Image, url: str) -> str:
         """Store image and its metadata, return image_id"""
-        return google_drive_upload(imagel)
+        return google_drive_upload(image)
     
     
     
