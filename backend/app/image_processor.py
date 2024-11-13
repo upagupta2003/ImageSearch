@@ -2,6 +2,8 @@ import numpy as np
 from PIL import Image
 import requests
 from io import BytesIO
+from google_utilities import google_drive_upload
+
 
 class ImageProcessor:
     def __init__(self):
@@ -42,5 +44,8 @@ class ImageProcessor:
 
     def _store_image(self, image: Image, url: str) -> str:
         """Store image and its metadata, return image_id"""
-        # TODO: Implement storage logic
-        return "temp_image_id"
+        return google_drive_upload(image)
+    
+    
+    
+
