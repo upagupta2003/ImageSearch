@@ -2,13 +2,16 @@ import numpy as np
 from PIL import Image
 import requests
 from io import BytesIO
-from google_utilities import google_drive_upload
-
+from google_utilities import GoogleDriveUtilities
+import torch
+from transformers import CLIPProcessor, CLIPModel
 
 class ImageProcessor:
     def __init__(self):
-        # Initialize any required ML models or processing tools
-        pass
+        # Load the CLIP model from Hugging Face
+        self.model = CLIPModel.from_pretrained('openai/clip-vit-base-patch32')
+        # Load the processor used to pre-process the images and make them compatible with the model
+        self.processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
     async def process_image_url(self, url: str) -> str:
         """
@@ -49,3 +52,6 @@ class ImageProcessor:
     
     
 
+if __name__ == "__main__":
+    image_processor = ImageProcessor()
+    print(image_processor.model)
