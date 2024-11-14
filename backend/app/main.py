@@ -1,8 +1,9 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
-from .image_processor import ImageProcessor
-from .search_engine import SearchEngine
+from image_processor import ImageProcessor
+from search_engine import SearchEngine
+import uvicorn
 
 app = FastAPI(title="ImageSearch API")
 
@@ -47,3 +48,8 @@ async def search_similar_images(
         return {"error": "Either image or image_url must be provided"}
     
     return {"results": results}
+
+
+if __name__ == "__main__":
+    
+    uvicorn.run(app="main:app", host="0.0.0.0", port=8000, reload=True)
