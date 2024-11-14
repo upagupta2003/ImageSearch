@@ -21,13 +21,9 @@ class DatabaseUtilities():
     def connect_image_search_collection(self):
         db_client = self.get_db_client()
         return db_client.get_or_create_collection(name=self.collection_name)
-    
-       
-
-    
 
 if __name__ == "__main__":
     Utilities.Load_Env
     collection = Utilities.get_env_variable("IMAGE_SEARCH_COLLECTION_NAME")
-    db_util = DatabaseUtilities()
+    db_util = DatabaseUtilities(collection)
     db_util.connect_image_search_collection()
