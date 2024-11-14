@@ -1,0 +1,48 @@
+[33mWARNING[0m:  [13-11-2024 03:38:13] chroma_server_nofile is set to 65535, but this is less than current soft limit of 1048576. chroma_server_nofile will not be set.
+[32mINFO[0m:     [13-11-2024 03:38:15] Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+[36mDEBUG[0m:    [13-11-2024 03:38:15] Starting component System
+[36mDEBUG[0m:    [13-11-2024 03:38:15] Starting component OpenTelemetryClient
+[36mDEBUG[0m:    [13-11-2024 03:38:15] Starting component SqliteDB
+[36mDEBUG[0m:    [13-11-2024 03:38:16] Starting component SimpleQuotaEnforcer
+[36mDEBUG[0m:    [13-11-2024 03:38:16] Starting component Posthog
+[36mDEBUG[0m:    [13-11-2024 03:38:16] Starting component SimpleRateLimitEnforcer
+[36mDEBUG[0m:    [13-11-2024 03:38:16] Starting component LocalSegmentManager
+[36mDEBUG[0m:    [13-11-2024 03:38:16] Starting component LocalExecutor
+[36mDEBUG[0m:    [13-11-2024 03:38:16] Starting component SegmentAPI
+[32mINFO[0m:     [13-11-2024 03:38:16] Started server process [[36m90232[0m]
+[32mINFO[0m:     [13-11-2024 03:38:16] Waiting for application startup.
+[32mINFO[0m:     [13-11-2024 03:38:16] Application startup complete.
+[31mERROR[0m:    [13-11-2024 03:38:16] [Errno 98] error while attempting to bind on address ('127.0.0.1', 8000): address already in use
+[32mINFO[0m:     [13-11-2024 03:38:16] Waiting for application shutdown.
+[36mDEBUG[0m:    [13-11-2024 03:38:16] Stopping component System
+[36mDEBUG[0m:    [13-11-2024 03:38:16] Stopping component SegmentAPI
+[36mDEBUG[0m:    [13-11-2024 03:38:16] Stopping component LocalExecutor
+[36mDEBUG[0m:    [13-11-2024 03:38:16] Stopping component LocalSegmentManager
+[36mDEBUG[0m:    [13-11-2024 03:38:16] Stopping component SimpleRateLimitEnforcer
+[36mDEBUG[0m:    [13-11-2024 03:38:16] Stopping component Posthog
+[36mDEBUG[0m:    [13-11-2024 03:38:16] Stopping component SimpleQuotaEnforcer
+[36mDEBUG[0m:    [13-11-2024 03:38:16] Stopping component SqliteDB
+[36mDEBUG[0m:    [13-11-2024 03:38:16] Stopping component OpenTelemetryClient
+[32mINFO[0m:     [13-11-2024 03:38:16] Application shutdown complete.
+[33mWARNING[0m:  [13-11-2024 03:38:49] chroma_server_nofile is set to 65535, but this is less than current soft limit of 1048576. chroma_server_nofile will not be set.
+[32mINFO[0m:     [13-11-2024 03:38:50] Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+[36mDEBUG[0m:    [13-11-2024 03:38:50] Starting component System
+[36mDEBUG[0m:    [13-11-2024 03:38:50] Starting component OpenTelemetryClient
+[36mDEBUG[0m:    [13-11-2024 03:38:50] Starting component SqliteDB
+[36mDEBUG[0m:    [13-11-2024 03:38:51] Starting component SimpleQuotaEnforcer
+[36mDEBUG[0m:    [13-11-2024 03:38:51] Starting component Posthog
+[36mDEBUG[0m:    [13-11-2024 03:38:51] Starting component SimpleRateLimitEnforcer
+[36mDEBUG[0m:    [13-11-2024 03:38:51] Starting component LocalSegmentManager
+[36mDEBUG[0m:    [13-11-2024 03:38:51] Starting component LocalExecutor
+[36mDEBUG[0m:    [13-11-2024 03:38:51] Starting component SegmentAPI
+[32mINFO[0m:     [13-11-2024 03:38:51] Started server process [[36m90636[0m]
+[32mINFO[0m:     [13-11-2024 03:38:51] Waiting for application startup.
+[32mINFO[0m:     [13-11-2024 03:38:51] Application startup complete.
+[32mINFO[0m:     [13-11-2024 03:38:51] Uvicorn running on [1mhttp://localhost:8213[0m (Press CTRL+C to quit)
+[32mINFO[0m:     [13-11-2024 03:39:01] 127.0.0.1:33032 - "GET / HTTP/1.1" 404
+[32mINFO[0m:     [13-11-2024 03:39:02] 127.0.0.1:33032 - "GET /favicon.ico HTTP/1.1" 404
+[32mINFO[0m:     [13-11-2024 03:39:09] 127.0.0.1:33032 - "GET / HTTP/1.1" 404
+[32mINFO[0m:     [13-11-2024 03:39:25] 127.0.0.1:38332 - "GET /docs HTTP/1.1" 200
+[32mINFO[0m:     [13-11-2024 03:39:26] 127.0.0.1:38332 - "GET /openapi.json HTTP/1.1" 200
+[32mINFO[0m:     [13-11-2024 03:40:12] 127.0.0.1:49674 - "GET /api/v1/collections?tenant=default_tenant&database=default_database HTTP/1.1" 200
+[32mINFO[0m:     [13-11-2024 03:41:03] 127.0.0.1:37334 - "GET /api/v1/count_collections?tenant=default_tenant&database=default_database HTTP/1.1" 200
