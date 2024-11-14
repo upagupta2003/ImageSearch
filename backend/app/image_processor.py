@@ -29,10 +29,10 @@ class ImageProcessor:
             image = Image.open(BytesIO(response.content))
             
             # Process image (resize, normalize, etc.)
-            processed_image = self._preprocess_image(image)
+            # processed_image = self._preprocess_image(image)
             
             # Generate embeddings and store image
-            image_id = self._store_image(processed_image, url)
+            image_id = self._store_image(image, url)
             
             return image_id
         except Exception as e:
@@ -55,9 +55,9 @@ class ImageProcessor:
             # Normalize the features
             image_features = image_features / image_features.norm(dim=-1, keepdim=True)
             
-        return image_features.squeeze(0).tolist()
+        return image_features
 
-    def _preprocess_image(self, image: Image, text = None) -> Image:
+    def _preprocess_image(self, image: Image, text = None):
         """Preprocess image for consistency"""
         
         # Initialize embeddings
@@ -68,6 +68,8 @@ class ImageProcessor:
         if image is not None:
             image_embeddings = self.extract_image_features(image)
             image_embeddings = image_embeddings / image_embeddings.norm(dim=-1, keepdim=True)
+            image_embeddings = image_embeddings.numpy()
+            image_embeddings = image_embeddings.squeeze(0).tolist()
 
         # Process the text if provided
         if text is not None:
@@ -84,42 +86,47 @@ class ImageProcessor:
             return combined_embeddings.tolist()
 
         # Return only image or text embeddings if one of them is provided
-        return image_embeddings.tolist() if text_embeddings is None else text_embeddings
+        return image_embeddings if text_embeddings is None else text_embeddings
 
     def _store_image(self, image: Image, url: str) -> str:
         """Store image and its metadata, return image_id"""
-        # Convert PIL Image to bytes
-        img_byte_arr = BytesIO()
-        image.save(img_byte_arr, format=image.format or 'JPEG')
-        img_byte_arr.seek(0)
+        try:
+            # Generate embeddings first
+            embeddings = self._preprocess_image(image)
 
-        # Create a file-like object with necessary attributes
-        image_id = Utilities.generate_uuid()
-        img_byte_arr.filename = f"image_{image_id}.jpg"
-        img_byte_arr.content_type = 'image/jpeg'
+            # Download original image again for storage
+            response = requests.get(url)
+            image_bytes = BytesIO(response.content)
 
-        # Upload to S3 using LocalStack
-        s3_utils = S3Utilities()
-        _, web_link = s3_utils.upload_to_s3(img_byte_arr)
+            # Create a file-like object with necessary attributes
+            image_id = Utilities.generate_uuid()
+            image_bytes.filename = f"image_{image_id}.jpg"
+            image_bytes.content_type = 'image/jpeg'
+
+            # Upload to S3 using LocalStack
+            s3_utils = S3Utilities()
+            web_link = s3_utils.upload_to_s3(image_bytes)
+            
+            # Store metadata and embeddings in ChromaDB
+            metadata = {
+                "image_id": image_id,
+                "source_url": url,
+                "width": image.size[0],
+                "height": image.size[1],
+                "mode": image.mode,
+                "path": web_link
+            }
+            self.collection.add(
+                ids=[image_id],
+                metadatas=[metadata],
+                embeddings=[embeddings],  # Add embeddings here
+                documents=[url]
+            )
+            return image_id
+        except Exception as e:
+            raise Exception(f"Error storing image: {str(e)}")
+
         
-        # Store metadata in ChromaDB
-        metadata = {
-            "image_id": image_id,
-            "source_url": url,
-            "width": image.size[0],
-            "height": image.size[1],
-            "mode": image.mode,
-            "hnsw:space": "cosine",
-            "path": web_link
-        }
-
-        self.collection.add(
-            ids=[image_id],
-            metadatas=[metadata],
-            documents=[url] 
-        )
-        
-        return image_id
     
     def get_image_by_id(self, image_id: str):
         return self.db_util.get_image_by_id(image_id)

@@ -2,9 +2,9 @@ from typing import List, Dict, Optional
 from fastapi import UploadFile
 from PIL import Image
 from io import BytesIO
-from .database_util import DatabaseUtilities
-from .image_processor import ImageProcessor
-from .aws_utilities import S3Utilities
+from database_util import DatabaseUtilities
+from image_processor import ImageProcessor
+from aws_utilities import S3Utilities
 import requests
 
 class SearchEngine:
@@ -13,7 +13,7 @@ class SearchEngine:
         self.db_util = DatabaseUtilities(collection_name="image_search")
         self.s3_util = S3Utilities()
 
-    async def get_all_images(self, limit: Optional[int] = None, offset: int = 0) -> Dict:
+    async def get_all_images(self):
         """
         Retrieve all images from the collection with optional pagination
         Args:
@@ -33,46 +33,28 @@ class SearchEngine:
                 return {
                     'status': 'success',
                     'images': [],
-                    'total_count': 0,
-                    'offset': offset,
-                    'limit': limit
-                }
+                    }
             
             # Get all image IDs (or subset if limit is provided)
-            results = collection.get(
-                include=['metadatas', 'documents', 'embeddings'],
-                limit=limit,
-                offset=offset
-            )
+            results = collection.get()
             
             # Format the results
             images = []
-            for i in range(len(results['ids'])):
-                images.append({
-                    'id': results['ids'][i],
-                    'metadata': results['metadatas'][i],
-                    'embedding': results['embeddings'][i],
-                    'document': results['documents'][i]
-                })
+            if results and 'ids' in results:
+                for idx, image_id in enumerate(results['ids']):
+                    metadata = results ['metadatas'][idx] if 'metadatas' in results else {}
+                    s3_link = metadata.get('path', '')
+
+                    images.append({ 
+                        "id": image_id, 
+                        "s3_link": s3_link 
+                    })
             
-            return {
-                'status': 'success',
-                'images': images,
-                'total_count': total_count,
-                'offset': offset,
-                'limit': limit
-            }
+            return images
             
         except Exception as e:
             print(f"Error retrieving images: {str(e)}")
-            return {
-                'status': 'error',
-                'message': str(e),
-                'images': [],
-                'total_count': 0,
-                'offset': offset,
-                'limit': limit
-            }
+        
 
     async def text_search(self, query: str) -> List[Dict]:
         """
@@ -104,7 +86,7 @@ class SearchEngine:
             search_image = Image.open(BytesIO(response.content))
             
             # Get image embeddings
-            search_embeddings = image_processor.extract_image_features(search_image)
+            search_embeddings = image_processor._preprocess_image(search_image)
             
             # Connect to the collection
             collection = self.db_util.connect_image_search_collection()
@@ -162,7 +144,8 @@ class SearchEngine:
             
             # Process the image and get embeddings
             image_processor = ImageProcessor()
-            search_embeddings = image_processor.extract_image_features(search_image)
+            search_embeddings = image_processor._preprocess_image(search_image)
+            
             
             # Connect to the collection
             collection = self.db_util.connect_image_search_collection()

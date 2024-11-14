@@ -42,7 +42,7 @@ class S3Utilities:
             # Generate URL
             url = f"http://localhost:4566/{self.bucket_name}/{filename}"
             
-            return filename, url
+            return url
             
         except Exception as error:
             print(f"S3 upload failed: {error}")
