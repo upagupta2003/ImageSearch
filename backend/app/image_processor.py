@@ -109,6 +109,7 @@ class ImageProcessor:
             "width": image.size[0],
             "height": image.size[1],
             "mode": image.mode,
+            "hnsw:space": "cosine",
             "path": web_link
         }
 
@@ -119,6 +120,11 @@ class ImageProcessor:
         )
         
         return image_id
+    
+    def get_image_by_id(self, image_id: str):
+        return self.db_util.get_image_by_id(image_id)
+    
+    
     
 
 if __name__ == "__main__":

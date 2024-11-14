@@ -49,6 +49,12 @@ async def search_similar_images(
     
     return {"results": results}
 
+@app.delete("/images/delete")
+async def delete_image(image_id: str):
+    """Delete an image from the index"""
+    await search_engine.delete_image(image_id)
+    return {"status": "success"}
+
 
 if __name__ == "__main__":
     
