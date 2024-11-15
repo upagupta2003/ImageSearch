@@ -56,13 +56,59 @@ class SearchEngine:
             print(f"Error retrieving images: {str(e)}")
         
 
-    async def text_search(self, query: str) -> List[Dict]:
+    async def text_search(self, query: str) -> Dict:
         """
         Search images using natural language text
-        Returns: List of matching images with similarity scores
+        Args:
+            query: Text query to search for similar images
+        Returns:
+            Dict containing search results with similarity scores above 80%, ranked by similarity
         """
-        # TODO: Implement text-based search
-        pass
+        try:
+            # Get text embeddings using ImageProcessor's CLIP model
+            image_processor = ImageProcessor()
+            text_embeddings = image_processor._get_text_embeddings(query)
+            
+            # Connect to the collection
+            collection = self.db_util.connect_image_search_collection()
+            
+            # Search for similar images using cosine similarity
+            search_results = collection.query(
+                query_embeddings=[text_embeddings],
+                n_results=100,  # Increased to ensure we get all relevant matches
+                include=['metadatas', 'documents', 'distances']
+            )
+            
+            # Filter, format and rank results (similarity > 80%)
+            results = []
+            if search_results['ids']:
+                for i in range(len(search_results['ids'][0])):
+                    similarity_score = 1 - float(search_results['distances'][0][i])
+                    if similarity_score >= 0.8:  # 80% threshold
+                        results.append({
+                            'id': search_results['ids'][0][i],
+                            'metadata': search_results['metadatas'][0][i],
+                            's3_url': search_results['metadatas'][0][i].get('path'),
+                            'similarity_score': round(similarity_score * 100, 2)  # Convert to percentage
+                        })
+            
+            # Sort results by similarity score in descending order
+            results.sort(key=lambda x: x['similarity_score'], reverse=True)
+            
+            return {
+                'status': 'success',
+                'results': results,
+                'total_results': len(results)
+            }
+            
+        except Exception as e:
+            print(f"Error in text search: {str(e)}")
+            return {
+                'status': 'error',
+                'message': str(e),
+                'results': [],
+                'total_results': 0
+            }
     
     
 
