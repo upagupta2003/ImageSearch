@@ -45,10 +45,24 @@ class ImageProcessor:
         try:
             # Prepare a list of possible descriptive prompts
             categories = [
-                "landscape", "portrait", "animal", "food", "architecture",
-                "nature", "urban", "indoor", "outdoor", "artwork",
-                "vehicle", "technology", "people", "abstract", "night scene"
+                # Animals
+                "cat", "dog", "bird", "wild animal",
+                # People
+                "person", "portrait", "group of people",
+                # Scenes
+                "landscape", "cityscape", "indoor scene", "outdoor scene",
+                # Objects
+                "food", "vehicle", "furniture", "electronics",
+                # Types
+                "artwork", "photograph", "abstract image",
+                # Specific scenes
+                "nature scene", "urban scene", "night scene",
+                # Architecture
+                "building", "architecture", "house", "monument"
             ]
+            
+            if image.mode != "RGB":
+                image = image.convert("RGB")
             
             image_inputs = self.processor(images=image, return_tensors="pt")
             text_inputs = self.processor(text=categories, return_tensors="pt", padding=True)
