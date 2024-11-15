@@ -44,26 +44,14 @@ class ImageProcessor:
     def generate_description(self, image: Image) -> str:
         try:
             # Prepare a list of possible descriptive prompts
-            candidate_descriptions = [
-                "This image shows a scenic view",
-                "This is a close-up photograph",
-                "This image contains people",
-                "This appears to be taken outdoors",
-                "This is an indoor scene",
-                "This shows a natural landscape",
-                "This is a detailed photograph",
-                "This image features vibrant colors",
-                "This is a black and white photograph",
-                "This shows an artistic composition",
-                "This appears to be a candid moment",
-                "This shows an urban environment",
-                "This appears to be during daytime",
-                "This appears to be during nighttime",
-                "This shows a peaceful scene"
+            categories = [
+                "landscape", "portrait", "animal", "food", "architecture",
+                "nature", "urban", "indoor", "outdoor", "artwork",
+                "vehicle", "technology", "people", "abstract", "night scene"
             ]
             
             image_inputs = self.processor(images=image, return_tensors="pt")
-            text_inputs = self.processor(text=candidate_descriptions, return_tensors="pt", padding=True)
+            text_inputs = self.processor(text=categories, return_tensors="pt", padding=True)
             
             with torch.no_grad():
                 image_features = self.model.get_image_features(**image_inputs)
@@ -76,8 +64,8 @@ class ImageProcessor:
                     dim=1)
             
             # Find the index of the highest similarity score
-            best_match_index = similarity.argmax().item()
-            description = candidate_descriptions[best_match_index]
+            best_match_index = similarity[0].argmax().item()
+            description = f"a photo of {categories[best_match_index]}"
             
             return description
         
