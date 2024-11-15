@@ -16,7 +16,7 @@ class ImageProcessor:
         # Load the processor used to pre-process the images and make them compatible with the model
         self.processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
         self.db_util = DatabaseUtilities("image_search")
-        self.collection = self.db_util.connect_image_search_collection() 
+        self.collection = self.db_util.connect_image_search_collection()
 
     async def process_image_url(self, url: str) -> str:
         """
@@ -29,14 +29,61 @@ class ImageProcessor:
             image = Image.open(BytesIO(response.content))
             
             # Process image (resize, normalize, etc.)
-            # processed_image = self._preprocess_image(image)
+            #processed_image = self._preprocess_image(image)
+            
+            # Generate description
+            description = self.generate_description(image)
             
             # Generate embeddings and store image
-            image_id = self._store_image(image, url)
+            image_id = self._store_image(image, url, description)
             
             return image_id
         except Exception as e:
             raise Exception(f"Failed to process image: {str(e)}")
+    
+    def generate_description(self, image: Image) -> str:
+        try:
+            # Prepare a list of possible descriptive prompts
+            candidate_descriptions = [
+                "This image shows a scenic view",
+                "This is a close-up photograph",
+                "This image contains people",
+                "This appears to be taken outdoors",
+                "This is an indoor scene",
+                "This shows a natural landscape",
+                "This is a detailed photograph",
+                "This image features vibrant colors",
+                "This is a black and white photograph",
+                "This shows an artistic composition",
+                "This appears to be a candid moment",
+                "This shows an urban environment",
+                "This appears to be during daytime",
+                "This appears to be during nighttime",
+                "This shows a peaceful scene"
+            ]
+            
+            image_inputs = self.processor(images=image, return_tensors="pt")
+            text_inputs = self.processor(text=candidate_descriptions, return_tensors="pt", padding=True)
+            
+            with torch.no_grad():
+                image_features = self.model.get_image_features(**image_inputs)
+                text_features = self.model.get_text_features(**text_inputs)
+                
+            #calculate similarity scores
+            similarity = torch.nn.functional.cosine_similarity(
+                    image_features.unsqueeze(1), 
+                    text_features.unsqueeze(0), 
+                    dim=1)
+            
+            # Find the index of the highest similarity score
+            best_match_index = similarity.argmax().item()
+            description = candidate_descriptions[best_match_index]
+            
+            return description
+        
+        except Exception as e:
+            raise Exception(f"Failed to generate description: {str(e)}")
+        
         
     def extract_image_features(self, image: Image) -> torch.Tensor:
         """
@@ -88,16 +135,16 @@ class ImageProcessor:
         # Return only image or text embeddings if one of them is provided
         return image_embeddings if text_embeddings is None else text_embeddings
 
-    def _store_image(self, image: Image, url: str) -> str:
+    def _store_image(self, image: Image, url: str, description: str) -> str:
         """Store image and its metadata, return image_id"""
         try:
             # Generate embeddings first
-            embeddings = self._preprocess_image(image)
-
+            embeddings = self._preprocess_image(image, description)
+            
             # Download original image again for storage
             response = requests.get(url)
             image_bytes = BytesIO(response.content)
-
+            
             # Create a file-like object with necessary attributes
             image_id = Utilities.generate_uuid()
             image_bytes.filename = f"image_{image_id}.jpg"
@@ -116,17 +163,17 @@ class ImageProcessor:
                 "mode": image.mode,
                 "path": web_link
             }
+
             self.collection.add(
                 ids=[image_id],
                 metadatas=[metadata],
                 embeddings=[embeddings],  # Add embeddings here
-                documents=[url]
+                documents=[url] 
             )
+            
             return image_id
         except Exception as e:
             raise Exception(f"Error storing image: {str(e)}")
-
-        
     
     def get_image_by_id(self, image_id: str):
         return self.db_util.get_image_by_id(image_id)
