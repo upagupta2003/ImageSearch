@@ -69,12 +69,16 @@ class SearchEngine:
             image_processor = ImageProcessor()
             text_embeddings = image_processor._get_text_embeddings(query)
             
+            # Convert embeddings to list if they aren't already
+            if hasattr(text_embeddings, 'tolist'):
+                text_embeddings = text_embeddings.tolist()
+            
             # Connect to the collection
             collection = self.db_util.connect_image_search_collection()
             
             # Search for similar images using cosine similarity
             search_results = collection.query(
-                query_embeddings=[text_embeddings],
+                query_embeddings=text_embeddings,  # Remove the extra list wrapping
                 n_results=100,  # Increased to ensure we get all relevant matches
                 include=['metadatas', 'documents', 'distances']
             )
@@ -82,13 +86,13 @@ class SearchEngine:
             # Filter, format and rank results (similarity > 80%)
             results = []
             if search_results['ids']:
-                for i in range(len(search_results['ids'][0])):
-                    similarity_score = 1 - float(search_results['distances'][0][i])
+                for i in range(len(search_results['ids'])):  # Remove [0] indexing
+                    similarity_score = 1 - float(search_results['distances'][i])
                     if similarity_score >= 0.8:  # 80% threshold
                         results.append({
-                            'id': search_results['ids'][0][i],
-                            'metadata': search_results['metadatas'][0][i],
-                            's3_url': search_results['metadatas'][0][i].get('path'),
+                            'id': search_results['ids'][i],
+                            'metadata': search_results['metadatas'][i],
+                            's3_url': search_results['metadatas'][i].get('path'),
                             'similarity_score': round(similarity_score * 100, 2)  # Convert to percentage
                         })
             
