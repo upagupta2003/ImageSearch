@@ -6,7 +6,7 @@ from aws_utilities import S3Utilities
 from database_util import DatabaseUtilities
 from util import Utilities
 import torch
-from transformers import CLIPProcessor, CLIPModel
+from transformers import CLIPProcessor, CLIPModel, BlipProcessor, BlipForConditionalGeneration
 
 
 class ImageProcessor:
@@ -15,6 +15,8 @@ class ImageProcessor:
         self.model = CLIPModel.from_pretrained('openai/clip-vit-base-patch32')
         # Load the processor used to pre-process the images and make them compatible with the model
         self.processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+        self.blip_processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+        self.blip_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
         self.db_util = DatabaseUtilities("image_search")
         self.collection = self.db_util.connect_image_search_collection()
 
@@ -43,47 +45,21 @@ class ImageProcessor:
     
     def generate_description(self, image: Image) -> str:
         try:
-            # Prepare a list of possible descriptive prompts
-            categories = [
-                # Animals
-                "cat", "dog", "bird", "wild animal",
-                # People
-                "person", "portrait", "group of people",
-                # Scenes
-                "landscape", "cityscape", "indoor scene", "outdoor scene",
-                # Objects
-                "food", "vehicle", "furniture", "electronics",
-                # Types
-                "artwork", "photograph", "abstract image",
-                # Specific scenes
-                "nature scene", "urban scene", "night scene",
-                # Architecture
-                "building", "architecture", "house", "monument"
-            ]
+            # Ensure image is in RGB mode
+            if image.mode != 'RGB':
+                image = image.convert('RGB')
             
-            if image.mode != "RGB":
-                image = image.convert("RGB")
-            
-            image_inputs = self.processor(images=image, return_tensors="pt")
-            text_inputs = self.processor(text=categories, return_tensors="pt", padding=True)
+            # Use BLIP to generate description
+            inputs = self.blip_processor(image, return_tensors="pt")
             
             with torch.no_grad():
-                image_features = self.model.get_image_features(**image_inputs)
-                text_features = self.model.get_text_features(**text_inputs)
-                
-            #calculate similarity scores
-            similarity = torch.nn.functional.cosine_similarity(
-                    image_features.unsqueeze(1), 
-                    text_features.unsqueeze(0), 
-                    dim=1)
-            
-            # Find the index of the highest similarity score
-            best_match_index = similarity[0].argmax().item()
-            description = f"a photo of {categories[best_match_index]}"
+                output = self.blip_model.generate(**inputs, max_new_tokens=50)
+                description = self.blip_processor.decode(output[0], skip_special_tokens=True)
             
             return description
-        
+            
         except Exception as e:
+            print(f"Error details: {str(e)}")
             raise Exception(f"Failed to generate description: {str(e)}")
         
         
