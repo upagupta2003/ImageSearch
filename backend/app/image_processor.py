@@ -95,6 +95,8 @@ class ImageProcessor:
             # Keep as tensor until final conversion
             image_embeddings = image_embeddings.squeeze(0)
 
+        text = self.generate_description(image)    
+
         # Process the text if provided
         if text is not None:
             text_inputs = self.processor(text=[text], return_tensors="pt", padding=True)
@@ -140,6 +142,7 @@ class ImageProcessor:
                 "source_url": url,
                 "width": image.size[0],
                 "height": image.size[1],
+                "description": description,
                 "mode": image.mode,
                 "path": web_link
             }
@@ -158,28 +161,7 @@ class ImageProcessor:
     def get_image_by_id(self, image_id: str):
         return self.db_util.get_image_by_id(image_id)
     
-    def _get_text_embeddings(self, text: str) -> torch.Tensor:
-        """
-        Extract features from text using CLIP model
-        Args:
-            text: Input text string
-        Returns:
-            torch.Tensor: Normalized text embeddings
-        """
-        try:
-            # Process the text using CLIP's processor
-            text_inputs = self.processor(text=[text], return_tensors="pt", padding=True)
-            
-            # Extract features using the model
-            with torch.no_grad():
-                text_features = self.model.get_text_features(**text_inputs)
-                # Normalize the features
-                text_features = text_features / text_features.norm(dim=-1, keepdim=True)
-                
-            return text_features.squeeze(0)
-        except Exception as e:
-            raise Exception(f"Failed to generate text embeddings: {str(e)}")
-    
+  
     
     
 
