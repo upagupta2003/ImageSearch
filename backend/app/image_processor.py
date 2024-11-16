@@ -95,8 +95,6 @@ class ImageProcessor:
             # Keep as tensor until final conversion
             image_embeddings = image_embeddings.squeeze(0)
 
-        text = self.generate_description(image)    
-
         # Process the text if provided
         if text is not None:
             text_inputs = self.processor(text=[text], return_tensors="pt", padding=True)
