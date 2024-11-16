@@ -19,6 +19,20 @@ The backend is built using:
 - LocalStack/S3 for image storage
 - Hugging Face Transformers for AI models
 
+##Prerequisites
+- Poetry (https://python-poetry.org/docs/)
+- Docker (https://www.docker.com/products/docker-desktop/)
+- LocalStack (https://localstack.cloud/docs/get-started/)
+- ChromaDB (https://docs.trychroma.com/getting-started)
+
+## Environment Setup
+### 1. LocalStack
+    - It is used to simulate AWS cloud services locally.
+    - It is used to store images in the S3-compatible storage.
+### 2. ChromaDB
+    - It is used to store the image embeddings and metadata.
+
+
 ## AI Models Used
 
 ### 1. CLIP (Contrastive Language-Image Pre-training)
@@ -53,5 +67,13 @@ The backend is built using:
 
 1. Install dependencies: available in pyproject.toml using poetry.
 2. Run the app with `python backend/app/main.py`
+3. Run LocalStack with `localstack start'
+4. Run ChromaDB using docker.
+
+##Prerequisites
+- Poetry
+- Docker
+- LocalStack 
+- ChromaDB
 
 
