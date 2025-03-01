@@ -21,9 +21,12 @@ class DatabaseUtilities():
         )
     
     #connect to the database
-    def connect_image_search_collection(self):
-        db_client = self.get_db_client()
-        return db_client.get_or_create_collection(name=self.collection_name, metadata={"hnsw:space": "cosine"})
+    def connect_collection(self, collection_name: str):
+        """Connect to a specific collection"""
+        try:
+            return self.client.get_or_create_collection(collection_name)
+        except Exception as e:
+            raise Exception(f"Error connecting to collection {collection_name}: {str(e)}")
 
 if __name__ == "__main__":
     Utilities.Load_Env

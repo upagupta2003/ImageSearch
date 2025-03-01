@@ -19,6 +19,9 @@ class ImageProcessor:
         self.blip_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
         self.db_util = DatabaseUtilities("image_search")
         self.collection = self.db_util.connect_image_search_collection()
+        # Create separate collections for image and text embeddings
+        self.image_collection = self.db_util.connect_collection("image_collection")
+        self.text_collection = self.db_util.connect_collection("text_collection")
 
     async def process_image_url(self, url: str) -> str:
         """
@@ -83,17 +86,14 @@ class ImageProcessor:
         return image_features
 
     def _preprocess_image(self, image: Image, text = None):
-        """Preprocess image for consistency"""
-        
-        # Initialize embeddings
+        """Preprocess image and text separately"""
         image_embeddings = None
         text_embeddings = None
         
         # Process the image if provided
         if image is not None:
             image_embeddings = self.extract_image_features(image)
-            # Keep as tensor until final conversion
-            image_embeddings = image_embeddings.squeeze(0)
+            image_embeddings = image_embeddings.squeeze(0).tolist()
 
         # Process the text if provided
         if text is not None:
@@ -101,40 +101,30 @@ class ImageProcessor:
             with torch.no_grad():
                 text_outputs = self.model.get_text_features(**text_inputs)
                 text_embeddings = text_outputs / text_outputs.norm(dim=-1, keepdim=True)
-                text_embeddings = text_embeddings.squeeze(0)
+                text_embeddings = text_embeddings.squeeze(0).tolist()
 
-        # Combine the embeddings if both image and text are provided
-        if image_embeddings is not None and text_embeddings is not None:
-            combined_embeddings = (image_embeddings + text_embeddings) / 2
-            combined_embeddings = combined_embeddings / torch.norm(combined_embeddings)
-            return combined_embeddings.tolist()
-
-        # Convert to list at the end
-        if image_embeddings is not None:
-            return image_embeddings.tolist()
-        if text_embeddings is not None:
-            return text_embeddings.tolist()
+        return image_embeddings, text_embeddings
 
     def _store_image(self, image: Image, url: str, description: str) -> str:
-        """Store image and its metadata, return image_id"""
+        """Store image and its metadata in separate collections"""
         try:
-            # Generate embeddings first
-            embeddings = self._preprocess_image(image, description)
+            # Generate embeddings
+            image_embeddings, text_embeddings = self._preprocess_image(image, description)
             
             # Download original image again for storage
             response = requests.get(url)
             image_bytes = BytesIO(response.content)
             
-            # Create a file-like object with necessary attributes
+            # Generate ID and prepare for S3
             image_id = Utilities.generate_uuid()
             image_bytes.filename = f"image_{image_id}.jpg"
             image_bytes.content_type = 'image/jpeg'
 
-            # Upload to S3 using LocalStack
+            # Upload to S3
             s3_utils = S3Utilities()
             web_link = s3_utils.upload_to_s3(image_bytes)
             
-            # Store metadata and embeddings in ChromaDB
+            # Create metadata
             metadata = {
                 "image_id": image_id,
                 "source_url": url,
@@ -145,19 +135,27 @@ class ImageProcessor:
                 "path": web_link
             }
 
-            self.collection.add(
-                ids=[image_id],
-                metadatas=[metadata],
-                embeddings=[embeddings],  # Add embeddings here
-                documents=[url] 
-            )
+            # Store in image collection
+            if image_embeddings:
+                self.image_collection.add(
+                    ids=[image_id],
+                    metadatas=[metadata],
+                    embeddings=[image_embeddings],
+                    documents=[url]
+                )
+            
+            # Store in text collection
+            if text_embeddings:
+                self.text_collection.add(
+                    ids=[image_id],
+                    embeddings=[text_embeddings],
+                    documents=[description]
+                )
             
             return image_id
         except Exception as e:
             raise Exception(f"Error storing image: {str(e)}")
-    
-    def get_image_by_id(self, image_id: str):
-        return self.db_util.get_image_by_id(image_id)
+        
     
   
     
